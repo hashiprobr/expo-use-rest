@@ -1,0 +1,34 @@
+{
+  "name": "@hashiprobr/expo-use-rest",
+  "version": "1.0.0",
+  "description": "TODO",
+  "keywords": [
+    "JavaScript",
+    "React",
+    "React Hook",
+    "React Native",
+    "Expo",
+    "FileSystem",
+    "expo-file-system"
+  ],
+  "homepage": "https://github.com/hashiprobr/expo-use-rest#readme",
+  "bugs": {
+    "url": "https://github.com/hashiprobr/expo-use-rest/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hashiprobr/expo-use-rest.git"
+  },
+  "license": "ISC",
+  "author": "Marcelo Hashimoto",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "peerDependencies": {
+    "expo": "^43.0.5",
+    "expo-file-system": "~13.0.3",
+    "react": "^17.0.1",
+    "react-native": ">=0.64.3"
+  }
+}
