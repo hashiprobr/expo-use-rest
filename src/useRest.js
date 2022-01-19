@@ -7,18 +7,6 @@ import * as FileSystem from 'expo-file-system';
 export default function useRest(url) {
     const [running, setRunning] = useState(false);
 
-    function fail(status, type, message) {
-        if (type.startsWith('text/html')) {
-            const parser = new DOMParser();
-            const document = parser.parseFromString(message, 'text/html');
-            message = document.body.innerText.trim();
-        }
-        throw {
-            status: status,
-            message: message,
-        };
-    }
-
     async function read(uri, init) {
         let responseBody;
         let response;
@@ -40,7 +28,10 @@ export default function useRest(url) {
             }
         } else {
             const message = await response.text();
-            fail(message);
+            throw {
+                status: status,
+                message: message,
+            };
         }
         return responseBody;
     }
@@ -53,10 +44,10 @@ export default function useRest(url) {
             if (method === 'POST' || method === 'PUT') {
                 init.headers = new Headers();
                 if (typeof requestBody === 'string') {
-                    init.headers.append('Content-Type', 'text/plain');
+                    init.headers.append('Content-Type', 'text/plain; charset=UTF-8');
                     init.body = requestBody;
                 } else {
-                    init.headers.append('Content-Type', 'application/json');
+                    init.headers.append('Content-Type', 'application/json; charset=UTF-8');
                     init.body = JSON.stringify(requestBody);
                 }
             }
@@ -74,10 +65,11 @@ export default function useRest(url) {
             if (Platform.OS === 'web') {
                 if (file.startsWith('data:')) {
                     const init = { method: method };
-                    init.body = Buffer.from(file.slice(file.indexOf(',') + 1), 'base64');
+                    const data = file.slice(file.indexOf(',') + 1);
+                    init.body = Buffer.from(data, 'base64');
                     responseBody = await read(uri, init);
                 } else {
-                    throw new Error('Upload in the web only supports data URLs');
+                    throw new Error('Upload in the web only supports data URIs');
                 }
             } else {
                 const options = { httpMethod: method };
@@ -100,7 +92,10 @@ export default function useRest(url) {
                     }
                 } else {
                     const message = response.body;
-                    fail(message);
+                    throw {
+                        status: status,
+                        message: message,
+                    };
                 }
             }
         } finally {
