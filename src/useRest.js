@@ -79,7 +79,7 @@ export default function useRest(url) {
                 } catch (error) {
                     throw {
                         status: 0,
-                        message: error,
+                        message: error.message,
                     };
                 }
                 const status = response.status;
