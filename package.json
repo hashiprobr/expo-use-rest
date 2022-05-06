@@ -1,6 +1,6 @@
 {
   "name": "@hashiprobr/expo-use-rest",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "A React Hook for simplifying requests to REST servers and the file upload features of expo-file-system",
   "keywords": [
     "JavaScript",
