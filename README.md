@@ -1,9 +1,7 @@
-expo-use-rest
-=============
+react-native-use-rest
+=====================
 
-**A React Hook for simplifying requests to REST servers and the file upload
-features of
-[expo-file-system](https://docs.expo.dev/versions/latest/sdk/filesystem/)**
+**A React Native Hook for simplifying requests to REST servers**
 
 This hook receives an `url` and returns an object with seven properties:
 
