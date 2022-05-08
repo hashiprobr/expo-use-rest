@@ -2,8 +2,6 @@ import { useState } from 'react';
 
 import { Platform } from 'react-native';
 
-import * as FileSystem from 'expo-file-system';
-
 export default function useRest(url) {
     const [running, setRunning] = useState(false);
 
@@ -16,19 +14,23 @@ export default function useRest(url) {
                 if (files) {
                     init.body = new FormData();
                     for (const [key, value] of Object.entries(files)) {
-                        let content;
                         if (Platform.OS === 'web') {
                             if (value.startsWith('data:')) {
-                                content = value.slice(value.indexOf(',') + 1);
+                                const string = value.slice(value.indexOf(',') + 1);
+                                init.body.append(key, new Blob([string], { type: 'application/octet-stream;base64' }));
                             } else {
                                 throw new Error('Multipart in the web only supports data URIs');
                             }
                         } else {
-                            content = await FileSystem.readAsStringAsync(value, { encoding: FileSystem.EncodingType.Base64 });
+                            init.body.append(key, { uri: value, type: 'application/octet-stream' });
                         }
-                        init.body.append(key, new Blob([content], { type: 'application/octet-stream;base64' }));
                     }
-                    init.body.append('body', new Blob([JSON.stringify(requestBody)], { type: 'application/json' }));
+                    const string = JSON.stringify(requestBody);
+                    if (Platform.OS === 'web') {
+                        init.body.append('body', new Blob([string], { type: 'application/json' }));
+                    } else {
+                        init.body.append('body', { string: string, type: 'application/json' });
+                    }
                 } else {
                     init.headers = new Headers();
                     init.headers.append('Content-Type', 'application/json');
