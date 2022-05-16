@@ -48,11 +48,13 @@ export default function useRest(url) {
             }
             const status = response.status;
             const type = response.headers.get('Content-Type');
-            if (status === 200) {
-                if (type.startsWith('application/json')) {
-                    responseBody = await response.json();
-                } else {
-                    responseBody = await response.text();
+            if (status >= 200 && status < 300) {
+                if (status !== 204) {
+                    if (type.startsWith('application/json')) {
+                        responseBody = await response.json();
+                    } else {
+                        responseBody = await response.text();
+                    }
                 }
             } else {
                 const message = await response.text();
