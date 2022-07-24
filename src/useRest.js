@@ -18,17 +18,25 @@ export default function useRest(url) {
                             if (value.startsWith('data:')) {
                                 const index = value.indexOf(',');
                                 const type = value.slice(5, index);
-                                const blob = new Blob([value.slice(index + 1)]);
+                                const string = value.slice(index + 1);
                                 if (type) {
-                                    init.body.append(key, blob, { type: type });
+                                    init.body.append(key, new Blob([string], { type: type }));
                                 } else {
-                                    init.body.append(key, blob);
+                                    init.body.append(key, new Blob([string]));
                                 }
                             } else {
                                 throw new Error('Multipart in the web only supports data URIs');
                             }
                         } else {
-                            init.body.append(key, { uri: value });
+                            if (value.startsWith('data:')) {
+                                throw new Error('Multipart in device does not support data URIs');
+                            } else {
+                                if (Platform.OS === 'android') {
+                                    init.body.append(key, { uri: value, type: 'application/octet-stream' });
+                                } else {
+                                    init.body.append(key, { uri: value });
+                                }
+                            }
                         }
                     }
                     const string = JSON.stringify(requestBody);
