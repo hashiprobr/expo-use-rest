@@ -45,10 +45,8 @@ Peer dependencies
 
 ``` json
 {
-    "expo": "^43.0.5",
-    "expo-file-system": "^13.0.3",
-    "react": "^17.0.1",
-    "react-native": ">=0.64.3"
+    "react": "17.0.2",
+    "react-native": "0.68.2"
 }
 ```
 
