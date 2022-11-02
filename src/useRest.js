@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { Platform } from 'react-native';
 
-export default function useRest(url) {
+export default function useRest(url, raw) {
     const [running, setRunning] = useState(false);
 
     async function request(method, uri, requestBody, files) {
@@ -61,19 +61,27 @@ export default function useRest(url) {
                 };
             }
             const status = response.status;
-            const type = response.headers.get('Content-Type');
-            if (Math.trunc(status / 100) === 2) {
-                if (type && type.startsWith('application/json')) {
-                    responseBody = await response.json();
-                } else {
-                    responseBody = await response.text();
-                }
-            } else {
-                const message = await response.text();
-                throw {
+            const contentType = response.headers.get('Content-Type');
+            if (raw) {
+                responseBody = {
                     status: status,
-                    message: message,
+                    contentType: contentType,
+                    content: await response.text(),
                 };
+            } else {
+                if (Math.trunc(status / 100) === 2) {
+                    if (contentType && contentType.startsWith('application/json')) {
+                        responseBody = await response.json();
+                    } else {
+                        responseBody = await response.text();
+                    }
+                } else {
+                    const message = await response.text();
+                    throw {
+                        status: status,
+                        message: message,
+                    };
+                }
             }
         } finally {
             setRunning(false);
