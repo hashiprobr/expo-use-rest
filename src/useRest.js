@@ -2,13 +2,20 @@ import { useState } from 'react';
 
 import { Platform } from 'react-native';
 
-export default function useRest(url, raw) {
+function clean(object) {
+    if (typeof object !== 'object' || object === null) {
+        return {};
+    }
+    return object;
+}
+
+export default function useRest(url) {
     const [running, setRunning] = useState(false);
 
     let count = 0;
     let mutex = Promise.resolve();
 
-    async function request(method, uri, requestBody, files) {
+    async function request(method, uri, options) {
         let responseBody;
         mutex = mutex.then(() => {
             if (count === 0) {
@@ -17,8 +24,19 @@ export default function useRest(url, raw) {
             count++;
         });
         try {
-            const init = { method: method };
+            if (typeof uri !== 'string') {
+                throw new Error('Request URI must be a string');
+            }
+            options = clean(options);
+            const init = {
+                method: method,
+                headers: new Headers(),
+            };
+            for (const [name, value] of Object.entries(clean(options.headers))) {
+                init.headers.append(name, value);
+            }
             if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+                const files = clean(options.files);
                 if (files) {
                     init.body = new FormData();
                     for (const [key, value] of Object.entries(files)) {
@@ -47,16 +65,15 @@ export default function useRest(url, raw) {
                             }
                         }
                     }
-                    const string = JSON.stringify(requestBody);
+                    const string = JSON.stringify(options.body);
                     if (Platform.OS === 'web') {
                         init.body.append('body', new Blob([string], { type: 'application/json' }));
                     } else {
                         init.body.append('body', { string: string, type: 'application/json' });
                     }
                 } else {
-                    init.headers = new Headers();
                     init.headers.append('Content-Type', 'application/json');
-                    init.body = JSON.stringify(requestBody);
+                    init.body = JSON.stringify(options.body);
                 }
             }
             let response;
@@ -65,31 +82,30 @@ export default function useRest(url, raw) {
             } catch (error) {
                 throw {
                     status: 0,
-                    message: error.message,
+                    contentType: 'text/plain',
+                    content: error.message,
                 };
             }
             const status = response.status;
             const contentType = response.headers.get('Content-Type');
-            if (raw) {
+            if (contentType && contentType.startsWith('application/json')) {
+                responseBody = await response.json();
+            } else {
+                responseBody = await response.text();
+            }
+            if (Math.trunc(status / 100) > 3) {
+                throw {
+                    status: status,
+                    contentType: contentType,
+                    content: responseBody,
+                };
+            }
+            if (options.complete) {
                 responseBody = {
                     status: status,
                     contentType: contentType,
-                    content: await response.text(),
+                    content: responseBody,
                 };
-            } else {
-                if (Math.trunc(status / 100) === 2) {
-                    if (contentType && contentType.startsWith('application/json')) {
-                        responseBody = await response.json();
-                    } else {
-                        responseBody = await response.text();
-                    }
-                } else {
-                    const message = await response.text();
-                    throw {
-                        status: status,
-                        message: message,
-                    };
-                }
             }
         } finally {
             mutex = mutex.then(() => {
@@ -104,10 +120,10 @@ export default function useRest(url, raw) {
 
     return {
         running,
-        get: (uri) => request('GET', uri),
-        post: (uri, requestBody, files) => request('POST', uri, requestBody, files),
-        put: (uri, requestBody, files) => request('PUT', uri, requestBody, files),
-        patch: (uri, requestBody, files) => request('PATCH', uri, requestBody, files),
-        delete: (uri) => request('DELETE', uri),
+        get: (uri, options) => request('GET', uri, options),
+        post: (uri, body, options) => request('POST', uri, { ...options, body }),
+        put: (uri, body, options) => request('PUT', uri, { ...options, body }),
+        patch: (uri, body, options) => request('PATCH', uri, { ...options, body }),
+        delete: (uri, options) => request('DELETE', uri, options),
     };
 }
