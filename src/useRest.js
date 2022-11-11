@@ -5,9 +5,17 @@ import { Platform } from 'react-native';
 export default function useRest(url, raw) {
     const [running, setRunning] = useState(false);
 
+    let count = 0;
+    let mutex = Promise.resolve();
+
     async function request(method, uri, requestBody, files) {
         let responseBody;
-        setRunning(true);
+        mutex = mutex.then(() => {
+            if (count === 0) {
+                setRunning(true);
+            }
+            count++;
+        });
         try {
             const init = { method: method };
             if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
@@ -84,7 +92,12 @@ export default function useRest(url, raw) {
                 }
             }
         } finally {
-            setRunning(false);
+            mutex = mutex.then(() => {
+                count--;
+                if (count === 0) {
+                    setRunning(false);
+                }
+            });
         }
         return responseBody;
     }
