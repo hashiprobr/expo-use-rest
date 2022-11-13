@@ -1,6 +1,6 @@
 {
   "name": "@hashiprobr/react-native-use-rest",
-  "version": "3.3.1",
+  "version": "4.0.0",
   "description": "A React Native Hook for simplifying requests to REST servers",
   "keywords": [
     "JavaScript",
