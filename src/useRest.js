@@ -92,24 +92,29 @@ export default function useRest(url) {
                             if (part.type && typeof part.type !== 'string') {
                                 throw new Error('Request part type must be a string');
                             }
-                            if (part.string) {
-                                if (typeof part.string !== 'string') {
-                                    throw new Error('Request part string must be a string');
-                                }
-                                if (Platform.OS === 'web') {
-                                    if (part.type) {
-                                        init.body.append(name, new Blob([part.string], { type: part.type }));
+                            if (typeof part.content !== 'undefined') {
+                                if (part.type) {
+                                    if (part.type.startsWith('application/json')) {
+                                        part.content = JSON.stringify(part.content);
                                     } else {
-                                        init.body.append(name, new Blob([part.string]));
+                                        if (typeof part.content !== 'string') {
+                                            throw new Error('Request part content must be a string');
+                                        }
                                     }
                                 } else {
-                                    if (part.type) {
-                                        init.body.append(name, { string: part.string, type: part.type });
+                                    if (typeof part.content === 'string') {
+                                        part.type = 'text/plain; charset=utf-8';
                                     } else {
-                                        init.body.append(name, { string: part.string });
+                                        part.type = 'application/json; charset=utf-8';
+                                        part.content = JSON.stringify(part.content);
                                     }
                                 }
-                            } else if (part.uri) {
+                                if (Platform.OS === 'web') {
+                                    init.body.append(name, new Blob([part.content], { type: part.type }));
+                                } else {
+                                    init.body.append(name, { string: part.content, type: part.type });
+                                }
+                            } else if (typeof part.uri !== 'undefined') {
                                 if (typeof part.uri !== 'string') {
                                     throw new Error('Request part uri must be a string');
                                 }
@@ -146,27 +151,31 @@ export default function useRest(url) {
                                     }
                                 }
                             } else {
-                                throw new Error('Request part must have either a string or an uri');
+                                throw new Error('Request part must have either a content or an uri');
                             }
                         }
                     } else {
                         init.headers.append('Content-Type', options.type);
-                        if (options.type.startsWith('application/json')) {
-                            init.body = JSON.stringify(requestBody);
-                        } else {
-                            if (typeof requestBody !== 'string') {
-                                throw new Error('Request body must be a string');
+                        if (typeof requestBody !== 'undefined') {
+                            if (options.type.startsWith('application/json')) {
+                                init.body = JSON.stringify(requestBody);
+                            } else {
+                                if (typeof requestBody !== 'string') {
+                                    throw new Error('Request body must be a string');
+                                }
+                                init.body = requestBody;
                             }
-                            init.body = requestBody;
                         }
                     }
                 } else {
-                    if (typeof requestBody === 'string') {
-                        init.headers.append('Content-Type', 'text/plain');
-                        init.body = requestBody;
-                    } else {
-                        init.headers.append('Content-Type', 'application/json');
-                        init.body = JSON.stringify(requestBody);
+                    if (typeof requestBody !== 'undefined') {
+                        if (typeof requestBody === 'string') {
+                            init.headers.append('Content-Type', 'text/plain; charset=utf-8');
+                            init.body = requestBody;
+                        } else {
+                            init.headers.append('Content-Type', 'application/json; charset=utf-8');
+                            init.body = JSON.stringify(requestBody);
+                        }
                     }
                 }
             }
