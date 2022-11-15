@@ -5,36 +5,68 @@ react-native-use-rest
 
 This hook receives an `url` and returns an object with six properties:
 
-* a boolean state `running`, that indicates whether it is waiting for a request
-  or upload;
+* a boolean state `running`, that indicates whether it is waiting for a request;
 
-* an asynchronous method `get(uri)`, that sends a GET to `url+uri` and returns
-  its response;
+* an asynchronous method `get(uri[, options])`, that sends a GET to `url+uri`
+  and returns its response;
 
-* an asynchronous method `post(uri, body[, files])`, that sends a POST to
-  `url+uri` and returns its response (see below for details);
+* an asynchronous method `post(uri, body[, options])`, that sends a POST to
+  `url+uri` and returns its response;
 
-* an asynchronous method `put(uri, body[, files])`, that sends a PUT to
-  `url+uri` and returns its response (see below for details);
+* an asynchronous method `put(uri, body[, options])`, that sends a PUT to
+  `url+uri` and returns its response;
 
-* an asynchronous method `patch(uri, body[, files])`, that sends a PATCH to
-  `url+uri` and returns its response (see below for details);
+* an asynchronous method `patch(uri, body[, options])`, that sends a PATCH to
+  `url+uri` and returns its response;
 
-* an asynchronous method `delete(uri)`, that sends a DELETE to `url+uri` and
-  returns its response.
+* an asynchronous method `delete(uri[, options])`, that sends a DELETE to
+  `url+uri` and returns its response.
 
-In `post`, `put`, and `patch`, if the request `body` is a string, it is sent
-unchanged as `text/plain`. Otherwise, it is serialized and sent as
-`application/json`.
+The optional parameter `options` is an object that can have X attributes:
 
-Also in `post`, `put`, and `patch`, the optional `files` can be used to send
-multipart data. It should be an object that maps names to file URIs.
+* an object `headers`, that has headers you want to add to the request;
 
-If the response body is `application/json`, it is unserialized and received as
-whatever it represents. Otherwise, it is received unchanged as a string.
+* a string `type`, that indicates the type of the request body (only applies to
+  POST, PUT, and PATCH);
 
-If the response status is not 2**, throws an error with properties `status` and
-`message`. The status is 0 if the request could not even be made.
+* a boolean `full`, that indicates whether the response should be only the
+  content or an object with the `status`, the `contentType`, and the `content`.
+
+
+Request
+-------
+
+If `body` is `undefined`, the request has no content.
+
+If `type` is `undefined`, the `body` is sent unchanged as `text/plain` if it is
+a string and sent serialized as `application/json` otherwise.
+
+If `type` is defined, the `body` is sent serialized if it is `application/json`
+and sent unchanged otherwise. In the latter case, should be a string.
+
+In the particular case that `type` is `multipart/form-data`, the `body` should
+be an object where each attribute represents a field. The attribute name is
+the field name and the value is an object with two attributes:
+
+* a string `content`, that represents the content of the field;
+
+* a string `uri`, that represents the source of the content (if `content` is
+  defined, this attribute is ignored);
+
+* an optional string `type`, that indicates the type of the field.
+
+If `content` is defined, the same serialization rules apply.
+
+
+Response
+--------
+
+If the status code is 4XX, 5XX, or 0 (a special value indicating that the
+request could not even be sent), the response is thrown instead of returned.
+
+If the content type is `application/json`, the content is unserialized and
+received as whatever it representes. Otherwise, it is received unchanged as a
+string.
 
 
 Peer dependencies
