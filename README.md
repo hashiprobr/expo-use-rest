@@ -1,6 +1,8 @@
 react-native-use-rest
 =====================
 
+[PROJECT DISCONTINUED]
+
 **A React Native Hook for simplifying requests to REST servers**
 
 This hook receives an `url` and returns an object with six properties:
